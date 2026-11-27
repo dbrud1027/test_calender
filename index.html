@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>주간 할 일</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+/* VOICE: friendly and bright, still tidy — a planner you like opening every morning
+   IDEA: a sticker-and-highlighter weekly planner page
+   PICTURE: the week grid itself, right under a sunny header band
+   COLOUR and TYPE: pastel butter band, pastel mint checks and progress, pale mint panels; Jua for headings, Gowun Dodum for text
+   LAYOUT: yellow band with title, week nav and progress; rounded 7-column card (rows under 960px); green memo panel */
+:root{color-scheme:light dark;
+--bg:light-dark(#fffefa,#121a14);--ink:light-dark(#2d2b1e,#eef3e6);--mute:light-dark(#77775a,#9fb09a);
+--rule:light-dark(#f0ead3,#2a3a2c);--sun:light-dark(#fdf2c4,#2c2b1f);--sunsoft:light-dark(#fffae2,#24261b);
+--leaf:light-dark(#b3e2bd,#79bf8b);--leafink:light-dark(#43895a,#a9e0b6);--onleaf:light-dark(#24563a,#0f2318);
+--leafsoft:light-dark(#eff8ec,#17261a);--card:light-dark(#ffffff,#172019);
+--box:light-dark(#d9d6bb,#4c5c4d);--done:light-dark(#aeae98,#6f8270)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Gowun Dodum","Noto Sans KR",system-ui,sans-serif;overflow-x:clip;-webkit-font-smoothing:antialiased}
+.band{padding:clamp(20px,3vw,40px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2.5px solid var(--leafink);outline-offset:2px;border-radius:8px}
+.jua,h1,h2,.dn,.tab,.tg,.ptxt,.nav button{font-family:Jua,"Gowun Dodum",sans-serif;font-weight:400}
+
+.top{background:var(--sun);padding-bottom:clamp(16px,2vw,24px)}
+.tab{display:inline-block;background:var(--leaf);color:var(--onleaf);font-size:14px;padding:3px 12px;border-radius:999px}
+.hrow{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:12px}
+.wkno{margin:0 0 4px;font-size:15px;opacity:.75}
+h1{margin:0;font-size:clamp(32px,4.4vw,48px);line-height:1.1;text-wrap:balance}
+.nav{display:flex;gap:8px}
+.nav button{height:44px;min-width:44px;padding:0 18px;background:var(--card);border-radius:999px;font-size:16px;box-shadow:0 2px 6px color-mix(in srgb,var(--ink) 8%,transparent);transition:transform .15s}
+.nav button:hover{transform:translateY(-1px)}
+.nav .arrow{font-size:20px;line-height:1;padding:0}
+#today[aria-current=true]{opacity:.6;cursor:default;transform:none}
+.prog{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:20px;font-size:15px}
+.bar{flex:0 1 260px;height:12px;background:var(--card);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--leaf);border-radius:6px;transition:width .35s}
+.ptxt{font-size:17px}
+.right{margin-left:auto;display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px}
+.status{font-size:14px;opacity:.75}
+.syncbox{display:flex;align-items:center;gap:8px;font-size:14px}
+#syncmsg{opacity:.85}
+.sync{height:34px;padding:0 14px;border-radius:999px;background:var(--card);font-family:Jua,"Gowun Dodum",sans-serif;font-size:14px;box-shadow:0 2px 6px color-mix(in srgb,var(--ink) 8%,transparent)}
+.sync[hidden]{display:none}
+.sync:disabled{opacity:.5;cursor:default}
+
+.gridband{padding-top:clamp(18px,2.4vw,28px)}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:var(--card);border:2px solid var(--rule);border-radius:18px}
+.day{border-left:1.5px solid var(--rule);padding:14px 10px 10px;min-height:360px;display:flex;flex-direction:column}
+.day:first-child{border-left:0;border-radius:16px 0 0 16px}
+.day:last-child{border-radius:0 16px 16px 0}
+.day.wkend{background:var(--leafsoft)}
+.day.today{background:var(--sunsoft)}
+.dh{display:grid;grid-template-columns:minmax(0,1fr);align-items:center;gap:4px 6px;padding:0 0 10px 4px;border-bottom:1.5px dashed var(--rule);margin-bottom:6px}
+.dl{display:flex;align-items:baseline;gap:6px}
+.meta{display:flex;align-items:center;gap:6px;min-height:22px}
+.dn{font-size:24px;line-height:1}
+.dd{color:var(--mute);font-size:14px;font-variant-numeric:tabular-nums}
+.tg{background:var(--leaf);color:var(--onleaf);font-size:13px;padding:1px 9px;border-radius:999px}
+.today .dd{color:var(--leafink)}
+.dc{color:var(--mute);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dc.all{color:var(--leafink)}
+.mood{flex:none;position:relative}
+.mb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:1.5px dashed var(--box);color:var(--mute);transition:transform .15s}
+.mb:hover{background:var(--card);transform:scale(1.06)}
+.mb.set{border-color:transparent}
+.mb svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round}
+.em,.mm .e{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;line-height:1}
+.em{font-size:25px}
+.mm{position:absolute;bottom:calc(100% + 6px);right:0;z-index:10;min-width:164px;padding:5px;background:var(--card);border:2px solid var(--rule);border-radius:14px;box-shadow:0 12px 30px rgb(60 60 20/.12)}
+.mm button{display:flex;align-items:center;gap:10px;width:100%;height:40px;padding:0 10px;border-radius:9px;font-size:15px;text-align:left;white-space:nowrap}
+.mm button:hover,.mm button:focus-visible{background:var(--leafsoft);outline:none}
+.mm button[aria-checked=true]{background:var(--sunsoft)}
+.mm .e{font-size:20px;width:22px;text-align:center}
+.mm .clr{color:var(--mute);border-top:1.5px dashed var(--rule);border-radius:0 0 9px 9px;margin-top:4px;height:38px}
+
+.tasks{list-style:none;margin:0;padding:0}
+.task{display:flex;align-items:flex-start;gap:2px;border-radius:9px;position:relative}
+.task:hover{background:color-mix(in srgb,var(--sun) 45%,transparent)}
+.chk{flex:none;width:34px;height:36px;display:grid;place-items:center}
+.chk span{width:21px;height:21px;border:2px solid var(--box);border-radius:7px;background:var(--card);display:grid;place-items:center;transition:background .15s,border-color .15s,transform .15s}
+.chk:hover span{border-color:var(--leafink)}
+.chk svg{width:14px;height:14px;fill:none;stroke:var(--onleaf);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.done .chk span{background:var(--leaf);border-color:var(--leaf);transform:scale(1.05)}
+.done .chk svg{opacity:1}
+.txt{flex:1;padding:7px 2px;font-size:15.5px;line-height:1.45;overflow-wrap:anywhere;word-break:keep-all;cursor:text;white-space:pre-wrap}
+.pj{display:inline-block;width:100%;font-size:12px;line-height:1.3;color:var(--mute);margin-top:2px}
+.lv{font-family:Jua,"Gowun Dodum",sans-serif;font-size:13px;padding:0 9px;border-radius:999px;background:var(--card);border:1.5px solid var(--box);white-space:nowrap}
+.done .txt{color:var(--done);text-decoration:line-through;text-decoration-color:var(--done)}
+.edit{flex:1;margin:3px 0;padding:4px 6px;font:inherit;font-size:16px;line-height:1.45;color:var(--ink);background:var(--card);border:2px solid var(--leafink);border-radius:8px;resize:none;overflow:hidden}
+.del{flex:none;width:30px;height:36px;color:var(--mute);font-size:18px;opacity:0;border-radius:8px}
+.task:hover .del,.del:focus-visible{opacity:1}
+.del:hover{color:#e0533d}
+@media(hover:none){.del{opacity:.55}}
+.empty{color:var(--mute);font-size:14px;padding:8px 4px}
+.dfoot{margin-top:auto;padding-top:6px;display:flex;align-items:center;gap:6px}
+.add{flex:1}
+.addin{width:100%;height:40px;padding:0 10px;font:inherit;font-size:16px;color:var(--ink);background:transparent;border:1.5px dashed transparent;border-radius:10px}
+.addin::placeholder{color:var(--mute)}
+.addin:hover{border-color:var(--box)}
+.addin:focus{outline:none;border:2px solid var(--leafink);background:var(--card)}
+
+.memoband{padding-top:8px}
+.memo{background:var(--leafsoft);border-radius:18px;padding:clamp(18px,2.6vw,30px);display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:16px 32px}
+.memo h2{margin:0 0 6px;font-size:28px;line-height:1.15}
+.memo p{margin:0;color:var(--mute);font-size:15px}
+#memo{width:100%;min-height:180px;padding:8px 12px;font:inherit;font-size:16.5px;line-height:1.8;color:var(--ink);background:var(--card);border:2px solid transparent;border-radius:12px;resize:vertical}
+.memo .tip{margin-top:10px;font-size:14px}
+.memoview{min-height:140px;padding:8px 12px;font-size:16.5px;line-height:1.8;background:color-mix(in srgb,var(--card) 60%,var(--leafsoft));border:1.5px dashed transparent;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;word-break:keep-all;cursor:text}
+.memoview:hover{border-color:var(--box)}
+.memoview.empty{color:var(--mute)}
+.memoview strong{font-weight:700;font-size:1.12em;background:linear-gradient(transparent 58%,color-mix(in srgb,var(--sun) 85%,transparent) 58%);padding:0 2px;border-radius:2px}
+.memoview b{font-weight:700}
+.memobox:not(.editing) #memo{display:none}
+.memobox.editing .memoview{display:none}
+#memo:focus{outline:none;border-color:var(--leafink);box-shadow:0 0 0 4px color-mix(in srgb,var(--leaf) 35%,transparent)}
+.foot{color:var(--mute);font-size:13px;margin-top:14px}
+
+.linkbtn{color:var(--leafink);text-decoration:underline;font-size:13px;padding:6px 2px}
+.ov{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;background:rgb(40 40 20/.35)}
+.ov[hidden]{display:none}
+.dlg{width:min(460px,100%);background:var(--card);border-radius:18px;padding:26px 24px 20px;box-shadow:0 20px 50px rgb(40 40 20/.25)}
+.dlg h2{margin:0 0 6px;font-size:26px}
+.dlg p{margin:0;color:var(--mute);font-size:15px}
+.dlg label{display:block;margin-top:16px;font-size:14px;color:var(--mute)}
+.dlg input{display:block;width:100%;height:46px;margin-top:6px;padding:0 12px;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:2px solid var(--rule);border-radius:10px}
+.dlg input:focus{outline:none;border-color:var(--leafink)}
+.dlg .cerr{color:light-dark(#b4441c,#ff9a7a);min-height:1.5em;margin-top:12px;font-size:14px}
+.cbtn{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+.cbtn button{height:44px;padding:0 18px;border-radius:999px;font-family:Jua,"Gowun Dodum",sans-serif;font-size:16px}
+#cgo{background:var(--leaf);color:var(--onleaf)}
+#cgo:disabled{opacity:.6}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:var(--ink);color:var(--bg);padding:8px 8px 8px 18px;border-radius:999px;font-size:14px;box-shadow:0 6px 24px rgb(0 0 0/.2);z-index:5}
+.toast[hidden]{display:none}
+.toast button{color:var(--sun);height:36px;padding:0 14px;border-radius:999px;font-family:Jua,sans-serif}
+
+@media(max-width:960px){
+ .week{display:block}
+ .day,.day:first-child{display:grid;grid-template-columns:96px minmax(0,1fr) 44px;grid-template-rows:auto 1fr;gap:0 12px;min-height:0;border-left:0;border-top:1.5px solid var(--rule);padding:12px 10px;border-radius:0}
+ .day:first-child{border-top:0;border-radius:16px 16px 0 0}
+ .day:last-child{border-radius:0 0 16px 16px}
+ .dh{display:flex;flex-direction:column;align-items:flex-start;gap:4px;border:0;margin:0;padding:6px 0 0;grid-column:1;grid-row:1/3}
+ .dl{flex-direction:column;gap:4px}
+ .meta{flex-direction:column;align-items:flex-start;min-height:0;gap:4px}
+ .dfoot{display:contents}
+ .tasks,.empty{grid-column:2;grid-row:1}
+ .add{grid-column:2;grid-row:2;align-self:start;padding-top:2px}
+ .mood{grid-column:3;grid-row:1/3;align-self:center;justify-self:end}
+ .mm{top:calc(100% + 6px);bottom:auto}
+}
+@media(max-width:600px){
+ .hrow{align-items:flex-start;flex-direction:column}
+ .nav{width:100%}.nav #today{flex:1}
+ .right{margin-left:0;width:100%}
+ .day,.day:first-child{grid-template-columns:64px minmax(0,1fr) 40px;gap:0 6px;padding:12px 8px}
+ .memo{grid-template-columns:minmax(0,1fr)}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="band top"><div class="wrap">
+ <span class="tab">주간 업무</span>
+ <div class="hrow">
+  <div><p class="wkno" id="wkno"></p><h1 id="range">이번 주</h1></div>
+  <nav class="nav" aria-label="주 이동">
+   <button class="arrow" id="prev" aria-label="이전 주">‹</button>
+   <button id="today">이번 주</button>
+   <button class="arrow" id="next" aria-label="다음 주">›</button>
+  </nav>
+ </div>
+ <div class="prog"><div class="bar" aria-hidden="true"><i id="fill"></i></div><span class="ptxt" id="ptxt"></span><span class="right"><span class="syncbox"><span id="syncmsg" role="status"></span><button class="sync" id="sync" hidden>다시 가져오기</button></span><span class="status" id="status" role="status"></span></span></div>
+</div></header>
+
+<main class="band gridband"><div class="wrap"><div class="week" id="week"></div></div></main>
+
+<section class="band memoband"><div class="wrap">
+ <div class="memo">
+  <div><h2>이번 주 메모</h2><p>수업 과제, 마감일, 준비물처럼 이번 주에 기억할 내용을 적어 두세요. 주를 넘기면 메모도 그 주에 따로 보관돼요.</p><p class="tip">[과목명]은 크게 굵게, &lt;중요한 내용&gt;은 굵게 표시돼요.</p></div>
+  <div class="memobox" id="memobox"><div class="memoview empty" id="memoview" tabindex="0" role="button" aria-label="메모 편집"></div><textarea id="memo" aria-label="이번 주 메모" placeholder="예) 마케팅원론 – 4장 사례 분석 리포트, 다음 주 화요일 수업 전까지 제출"></textarea></div>
+ </div>
+ <p class="foot">할 일을 누르면 바로 고칠 수 있어요. 내용을 모두 지우면 삭제됩니다. 일정표 시트에서 가져온 할 일에는 프로젝트 이름이 작게 붙고, 여기서 지운 항목은 다시 가져오지 않아요. 시트는 읽기만 하고 고치지 않아요. <button class="linkbtn" id="openconn" type="button">저장 서버 연결 설정</button></p>
+</div></section>
+
+<div class="ov" id="conn" hidden><form class="dlg" id="connform" aria-labelledby="ctitle">
+ <h2 id="ctitle">저장 서버 연결</h2>
+ <p>내 Apps Script 웹 앱 주소와 연결 키를 붙여 넣어 주세요. 기기마다 한 번만 하면 돼요.</p>
+ <label>웹 앱 주소<input id="curl" type="url" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec"></label>
+ <label>연결 키<input id="ckey" autocomplete="off" spellcheck="false" placeholder="setup 실행 기록에 나온 키"></label>
+ <p class="cerr" id="cerr" role="alert"></p>
+ <div class="cbtn"><button type="button" id="clater">나중에</button><button type="submit" id="cgo">연결하기</button></div>
+</form></div>
+<div class="toast" id="toast" hidden><span id="tmsg">삭제했어요</span><button id="undo">되돌리기</button></div>
+
+<script>
+{
+const DOW=['월','화','수','목','금','토','일'];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uidGen=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const pad=n=>String(n).padStart(2,'0');
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const same=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+const mondayOf=d=>{const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x};
+const keyOf=m=>`${m.getFullYear()}-${pad(m.getMonth()+1)}-${pad(m.getDate())}`;
+const isoWeek=m=>{const t=addDays(m,3),j=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-j)/864e5-3+((j.getDay()+6)%7))/7)};
+const MOODS=[{k:'great',e:'😄',l:'아주 좋음'},{k:'good',e:'🙂',l:'좋음'},{k:'okay',e:'😐',l:'그저 그럼'},{k:'tired',e:'😴',l:'피곤함'},{k:'sad',e:'😔',l:'우울함'},{k:'stress',e:'🤯',l:'스트레스'}];
+const MK=Object.fromEntries(MOODS.map(m=>[m.k,m]));
+const FACE='<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M7 12.2c.8.9 1.8 1.3 3 1.3s2.2-.4 3-1.3"/><path d="M7.3 7.8v.4M12.7 7.8v.4" stroke-width="2"/></svg>';
+const blank=()=>({days:[[],[],[],[],[],[],[]],memo:'',mood:['','','','','','',''],leave:['','','','','','',''],hide:[]});
+function normalize(o){
+ const s=blank();if(!o||typeof o!=='object')return s;
+ if(Array.isArray(o.days))for(let i=0;i<7;i++){const l=o.days[i];if(Array.isArray(l))s.days[i]=l.filter(t=>t&&typeof t.t==='string').slice(0,200).map(t=>{const o={id:/^[a-z0-9]{4,24}$/i.test(t.id)?t.id:uidGen(),t:t.t.slice(0,500),d:t.d===true};if(t.s===true&&typeof t.k==='string'){o.s=true;o.k=t.k.slice(0,600);o.p=typeof t.p==='string'?t.p.slice(0,100):''}return o})}
+ if(typeof o.memo==='string')s.memo=o.memo.slice(0,20000);
+ if(Array.isArray(o.mood))for(let i=0;i<7;i++)s.mood[i]=MK[o.mood[i]]?o.mood[i]:'';
+ if(Array.isArray(o.leave))for(let i=0;i<7;i++)s.leave[i]=typeof o.leave[i]==='string'?o.leave[i].slice(0,20):'';
+ if(Array.isArray(o.hide))s.hide=o.hide.filter(x=>typeof x==='string').map(x=>x.slice(0,600)).slice(-300);
+ return s;
+}
+const hasContent=s=>s.memo.trim()||s.days.some(l=>l.length)||s.mood.some(Boolean);
+
+let monday=mondayOf(new Date()),key=keyOf(monday),state=blank(),editing=null,lastDel=null,toastT;
+const lsGet=k=>{try{return JSON.parse(localStorage.getItem('wk:'+k))}catch(e){return null}};
+const lsSet=()=>{try{localStorage.setItem('wk:'+key,JSON.stringify(state))}catch(e){}};
+
+/* ---------- rendering ---------- */
+function taskHTML(t){
+ const body=editing===t.id?`<textarea class="edit" rows="1" aria-label="할 일 수정">${esc(t.t)}</textarea>`:`<span class="txt" data-act="edit" tabindex="0">${esc(t.t)}${t.s&&t.p?`<span class="pj">${esc(t.p)}</span>`:''}</span>`;
+ return `<li class="task${t.d?' done':''}" data-id="${t.id}"><button class="chk" data-act="toggle" role="checkbox" aria-checked="${t.d}" aria-label="완료 표시"><span><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></span></button>${body}<button class="del" data-act="del" aria-label="삭제">×</button></li>`;
+}
+function countHTML(l){const d=l.filter(t=>t.d).length;return l.length?`<span class="dc${d===l.length?' all':''}">${d}/${l.length} 완료</span>`:'<span class="dc"></span>'}
+function moodHTML(i){
+ const m=MK[state.mood[i]];
+ return `<div class="mood"><button class="mb${m?' set':''}" data-mood="${i}" aria-haspopup="menu" aria-expanded="false" aria-label="${DOW[i]}요일 기분: ${m?m.l:'선택 안 함'}" title="${m?m.l:'기분 선택'}">${m?`<span class="em">${m.e}</span>`:FACE}</button></div>`;
+}
+let menu=null;
+function openMood(btn){
+ closeMood();const i=+btn.dataset.mood,cur=state.mood[i];
+ const el=document.createElement('div');el.className='mm';el.setAttribute('role','menu');el.setAttribute('aria-label',DOW[i]+'요일 기분');
+ el.innerHTML=MOODS.map(m=>`<button role="menuitemradio" aria-checked="${cur===m.k}" data-pick="${m.k}"><span class="e">${m.e}</span>${m.l}</button>`).join('')+`<button role="menuitemradio" class="clr" aria-checked="${!cur}" data-pick="">선택 안 함</button>`;
+ btn.after(el);btn.setAttribute('aria-expanded','true');menu={el,btn,i};
+ (el.querySelector('[aria-checked=true]')||el.firstElementChild).focus();
+}
+function closeMood(focus){if(!menu)return;const{el,btn}=menu;menu=null;el.remove();btn.setAttribute('aria-expanded','false');if(focus)btn.focus()}
+function pickMood(k){
+ if(!menu)return;const i=menu.i;closeMood();
+ state.mood[i]=k;const box=$(`.day[data-i="${i}"] .mood`);
+ if(box){box.outerHTML=moodHTML(i);$(`.day[data-i="${i}"] .mb`).focus()}
+ save();
+}
+function dayHTML(i){
+ const d=addDays(monday,i),l=state.days[i],td=same(d,new Date());
+ return `<section class="day${td?' today':''}${i>4?' wkend':''}" data-i="${i}" aria-label="${DOW[i]}요일 ${d.getMonth()+1}월 ${d.getDate()}일">
+ <header class="dh"><div class="dl"><span class="dn">${DOW[i]}</span><span class="dd">${d.getMonth()+1}.${d.getDate()}</span></div><div class="meta">${td?'<span class="tg">오늘</span>':''}${state.leave[i]?`<span class="lv">${esc(state.leave[i])}</span>`:''}${countHTML(l)}</div></header>
+ ${l.length?`<ul class="tasks">${l.map(taskHTML).join('')}</ul>`:'<div class="empty">할 일 없음</div>'}
+ <div class="dfoot"><form class="add" data-i="${i}"><input class="addin" id="add-${i}" placeholder="+ 할 일 추가" aria-label="${DOW[i]}요일 할 일 추가" autocomplete="off" enterkeyhint="done" maxlength="500"></form>${moodHTML(i)}</div></section>`;
+}
+function renderHead(){
+ const s=addDays(monday,6),m1=monday.getMonth()+1,m2=s.getMonth()+1;
+ $('#range').textContent=`${m1}월 ${monday.getDate()}일 – ${m1===m2?'':m2+'월 '}${s.getDate()}일`;
+ $('#wkno').textContent=`${s.getFullYear()}년 · ${isoWeek(monday)}주차`;
+ const cur=key===keyOf(mondayOf(new Date()));
+ $('#today').setAttribute('aria-current',cur);
+ $('#today').textContent=cur?'이번 주':'이번 주로';
+}
+function renderProg(){
+ const all=state.days.flat(),d=all.filter(t=>t.d).length;
+ $('#fill').style.width=all.length?(d/all.length*100)+'%':'0';
+ $('#ptxt').textContent=all.length?(d===all.length?`${all.length}개 모두 완료했어요`:`${all.length}개 중 ${d}개 완료`):'이번 주 할 일을 적어 보세요';
+}
+function render(){
+ menu=null;
+ const vals=[...document.querySelectorAll('.addin')].map(x=>x.value),fid=document.activeElement&&document.activeElement.id,ev=$('.edit')&&$('.edit').value;
+ $('#week').innerHTML=DOW.map((_,i)=>dayHTML(i)).join('');
+ vals.forEach((v,i)=>{if(v)$('#add-'+i).value=v});
+ if(fid&&fid.startsWith('add-'))$('#'+fid).focus();
+ const ed=$('.edit');if(ed){if(ev!=null)ed.value=ev;ed.focus();ed.setSelectionRange(ed.value.length,ed.value.length);grow(ed)}
+ renderProg();
+}
+function renderMemo(force){const m=$('#memo');if(force||document.activeElement!==m){m.value=state.memo;grow(m,180)}drawMemo()}
+function drawMemo(){
+ const v=$('#memoview');
+ if(state.memo.trim()){v.innerHTML=esc(state.memo).replace(/\[([^\[\]\n]+)\]/g,'<strong>$1</strong>').replace(/&lt;((?:(?!&lt;|&gt;)[^\n<>])+)&gt;/g,'<b>$1</b>');v.classList.remove('empty')}
+ else{v.textContent=$('#memo').placeholder;v.classList.add('empty')}
+}
+function editMemo(){const b=$('#memobox'),m=$('#memo');b.classList.add('editing');m.focus();grow(m,180)}
+function grow(el,min=0){el.style.height='auto';el.style.height=Math.max(min,el.scrollHeight+2)+'px'}
+function refreshDay(i){const sec=$(`.day[data-i="${i}"]`);if(sec)sec.querySelector('.dc').outerHTML=countHTML(state.days[i]);renderProg()}
+
+/* ---------- 저장 (내 Apps Script 웹 앱) ---------- */
+let conn=null,pend=null,inflight=0,chain=Promise.resolve(),saveT,loadSeq=0,syncing=false;
+try{conn=JSON.parse(localStorage.getItem('wk:conn'))}catch(e){}
+const hhmm=d=>`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const URL_OK=/^https:\/\/script\.google\.com\/(macros|a\/macros\/[^/?#]+)\/s\/[^/?#]+\/exec$/;
+function setStatus(s){$('#status').textContent={saving:'저장 중…',saved:'저장됨',local:'연결 전 · 이 브라우저에만 저장 중',offline:'저장 서버에 연결하지 못했어요 · 이 브라우저에 임시 저장 중',key:'연결 키가 맞지 않아요 · 아래에서 다시 연결해 주세요',big:'메모가 너무 길어서 저장하지 못했어요'}[s]||''}
+function setSync(msg,btn){$('#syncmsg').textContent=msg||'';const b=$('#sync');b.hidden=!btn;if(btn)b.textContent=btn;b.disabled=false}
+const dirtyGet=()=>{try{return JSON.parse(localStorage.getItem('wk:dirty'))||[]}catch(e){return[]}};
+const isDirty=k=>dirtyGet().includes(k);
+function markDirty(k,on){try{const d=dirtyGet().filter(x=>x!==k);if(on)d.push(k);localStorage.setItem('wk:dirty',JSON.stringify(d.slice(-60)))}catch(e){}}
+async function apiGet(params,c=conn){
+ const u=new URL(c.url);u.searchParams.set('key',c.key);for(const k in params)u.searchParams.set(k,params[k]);
+ const r=await fetch(u.toString(),{redirect:'follow'});if(!r.ok)throw{code:'http'};
+ const j=await r.json();if(!j.ok)throw{code:j.error};return j;
+}
+async function apiPost(body){
+ const r=await fetch(conn.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...body,key:conn.key})});
+ if(!r.ok)throw{code:'http'};const j=await r.json();if(!j.ok)throw{code:j.error};return j;
+}
+function save(delay=400){
+ lsSet();markDirty(key,true);
+ if(!conn){setStatus('local');return}
+ pend={k:key,b:JSON.parse(JSON.stringify(state))};
+ setStatus('saving');clearTimeout(saveT);saveT=setTimeout(flush,delay);
+}
+function flush(){
+ clearTimeout(saveT);if(!pend||!conn)return;const p=pend;pend=null;inflight++;
+ chain=chain.then(()=>apiPost({action:'save',k:p.k,data:p.b}))
+  .then(()=>{if(!(pend&&pend.k===p.k))markDirty(p.k,false);if(!pend&&inflight===1)setStatus('saved')},
+        e=>setStatus(e&&e.code==='key'?'key':e&&e.code==='too_big'?'big':'offline'))
+  .finally(()=>{inflight--});
+ return chain;
+}
+function applyRemote(doc){
+ const nd=normalize(doc);
+ if(JSON.stringify(nd)===JSON.stringify(state))return;
+ state=nd;lsSet();render();renderMemo();
+}
+function showSync(info){
+ if(!info||!info.at){setSync('시트를 아직 가져오지 않았어요','지금 가져오기');return}
+ const d=new Date(info.at);setSync(`시트 반영 ${d.getMonth()+1}/${d.getDate()} ${hhmm(d)}`,'다시 가져오기');
+}
+async function loadWeek(){
+ if(!conn)return;const k=key,seq=++loadSeq;
+ try{
+  const j=await apiGet({action:'week',k});
+  showSync(j.sync);
+  if(k!==key||seq!==loadSeq)return;
+  if(isDirty(k)){if(!pend&&!inflight)save(0);return}
+  if(pend||inflight||editing)return;
+  if(j.doc)applyRemote(j.doc);else if(hasContent(state))save(0);
+  if(!pend&&!inflight)setStatus('');
+ }catch(e){setStatus(e&&e.code==='key'?'key':'offline')}
+}
+const SYNC_ERR={key:'연결 키가 맞지 않아요.',http:'저장 서버에 연결하지 못했어요.'};
+async function runSync(){
+ if(!conn||syncing)return;
+ syncing=true;$('#sync').disabled=true;$('#syncmsg').textContent='시트에서 가져오는 중…';
+ try{
+  flush();await chain;
+  const j=await apiGet({action:'sync',k:key});
+  showSync(j.sync);
+  if(j.doc&&!pend&&!inflight&&!editing&&!isDirty(key))applyRemote(j.doc);
+ }catch(e){
+  const c=e&&e.code;setSync(SYNC_ERR[c]||(typeof c==='string'&&c.length>3?c:'저장 서버에 연결하지 못했어요.'),'다시 시도');
+ }finally{syncing=false;$('#sync').disabled=false}
+}
+$('#sync').onclick=()=>runSync();
+setInterval(()=>{if(!document.hidden)loadWeek()},60e3);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadWeek()});
+
+/* ---------- 연결 설정 ---------- */
+function openConn(){
+ $('#curl').value=conn?conn.url:'';$('#ckey').value=conn?conn.key:'';$('#cerr').textContent='';
+ $('#conn').hidden=false;$('#curl').focus();
+}
+function closeConn(){$('#conn').hidden=true}
+$('#openconn').onclick=openConn;
+$('#clater').onclick=()=>{closeConn();if(!conn)setStatus('local')};
+$('#conn').addEventListener('keydown',e=>{if(e.key==='Escape')$('#clater').click()});
+$('#connform').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const c={url:$('#curl').value.trim(),key:$('#ckey').value.trim()};
+ if(!URL_OK.test(c.url)){$('#cerr').textContent='웹 앱 주소는 https://script.google.com/…/exec 모양이어야 해요.';return}
+ if(!/^[A-Za-z0-9]{16,64}$/.test(c.key)){$('#cerr').textContent='연결 키를 다시 확인해 주세요.';return}
+ $('#cgo').disabled=true;$('#cerr').textContent='연결하는 중…';
+ try{
+  await apiGet({action:'ping'},c);
+  conn=c;try{localStorage.setItem('wk:conn',JSON.stringify(c))}catch(x){}
+  closeConn();setStatus('');loadWeek();
+ }catch(x){
+  $('#cerr').textContent=x&&x.code==='key'?'연결 키가 맞지 않아요.':'웹 앱에 연결하지 못했어요. 배포할 때 액세스 권한을 “모든 사용자”로 했는지 확인해 주세요.';
+ }finally{$('#cgo').disabled=false}
+});
+
+/* ---------- week switching ---------- */
+function goWeek(m){
+ if(editing)commitEdit();
+ flush();
+ monday=m;key=keyOf(m);editing=null;loadSeq++;
+ state=normalize(lsGet(key));
+ document.querySelectorAll('.addin').forEach(x=>x.value='');
+ renderHead();render();renderMemo(true);
+ loadWeek();
+}
+$('#prev').onclick=()=>goWeek(addDays(monday,-7));
+$('#next').onclick=()=>goWeek(addDays(monday,7));
+$('#today').onclick=()=>{const m=mondayOf(new Date());if(keyOf(m)!==key)goWeek(m)};
+
+/* ---------- interactions ---------- */
+const find=id=>{for(let i=0;i<7;i++){const j=state.days[i].findIndex(t=>t.id===id);if(j>-1)return[i,j]}return[-1,-1]};
+const wk=$('#week');
+wk.addEventListener('submit',e=>{
+ e.preventDefault();const f=e.target,i=+f.dataset.i,inp=f.querySelector('input'),v=inp.value.trim();
+ if(!v)return;
+ state.days[i].push({id:uidGen(),t:v,d:false});inp.value='';
+ render();$('#add-'+i).focus();save();
+});
+wk.addEventListener('click',e=>{
+ const mb=e.target.closest('[data-mood]');
+ if(mb){if(menu&&menu.btn===mb)closeMood();else openMood(mb);return}
+ const pk=e.target.closest('[data-pick]');
+ if(pk){pickMood(pk.dataset.pick);return}
+ const b=e.target.closest('[data-act]');if(!b)return;
+ const li=b.closest('.task'),id=li.dataset.id,[i,j]=find(id);if(i<0)return;
+ const act=b.dataset.act;
+ if(act==='toggle'){const t=state.days[i][j];t.d=!t.d;li.classList.toggle('done',t.d);b.setAttribute('aria-checked',t.d);refreshDay(i);save()}
+ else if(act==='edit'){if(editing&&editing!==id)commitEdit();editing=id;li.outerHTML=taskHTML(state.days[i][j]);const ed=$('.edit');ed.focus();ed.setSelectionRange(ed.value.length,ed.value.length);grow(ed)}
+ else if(act==='del')removeTask(i,j);
+});
+document.addEventListener('click',e=>{if(menu&&!e.target.closest('.mood'))closeMood()});
+wk.addEventListener('keydown',e=>{
+ const t=e.target;
+ if(menu&&t.closest('.mm')){
+  const items=[...menu.el.children],n=items.indexOf(t);
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();items[(n+(e.key==='ArrowDown'?1:-1)+items.length)%items.length].focus()}
+  else if(e.key==='Escape'){e.preventDefault();closeMood(true)}
+  else if(e.key==='Tab')closeMood();
+  return;
+ }
+ if(t.classList.contains('mb')&&e.key==='ArrowDown'){e.preventDefault();openMood(t);return}
+ if(t.classList.contains('txt')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();t.click()}
+ if(t.classList.contains('edit')){
+  if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();commitEdit()}
+  else if(e.key==='Escape'){const id=editing;editing=null;const[i,j]=find(id);t.closest('.task').outerHTML=taskHTML(state.days[i][j])}
+ }
+});
+wk.addEventListener('input',e=>{if(e.target.classList.contains('edit'))grow(e.target)});
+wk.addEventListener('focusout',e=>{if(e.target.classList.contains('edit'))setTimeout(()=>{if(editing&&document.activeElement!==$('.edit'))commitEdit()},0)});
+function commitEdit(){
+ const id=editing,ed=$('.edit');editing=null;if(!id)return;
+ const[i,j]=find(id);if(i<0)return;
+ const v=ed?ed.value.trim():state.days[i][j].t;
+ if(!v){removeTask(i,j);return}
+ const changed=v!==state.days[i][j].t;state.days[i][j].t=v;
+ const li=wk.querySelector(`.task[data-id="${id}"]`);if(li)li.outerHTML=taskHTML(state.days[i][j]);
+ if(changed)save();
+}
+function removeTask(i,j){
+ const t=state.days[i][j];lastDel={i,j,t,k:key};state.days[i].splice(j,1);
+ if(t.s&&t.k&&!state.hide.includes(t.k))state.hide.push(t.k);
+ render();save();toast('할 일을 삭제했어요');
+}
+function toast(msg){$('#tmsg').textContent=msg;$('#toast').hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{$('#toast').hidden=true},5000)}
+$('#undo').onclick=()=>{
+ if(!lastDel||lastDel.k!==key){$('#toast').hidden=true;return}
+ const{i,j,t}=lastDel;state.days[i].splice(Math.min(j,state.days[i].length),0,t);if(t.s)state.hide=state.hide.filter(x=>x!==t.k);lastDel=null;
+ $('#toast').hidden=true;render();save();
+};
+const memo=$('#memo');
+memo.addEventListener('input',()=>{state.memo=memo.value.slice(0,20000);grow(memo,180);save(900)});
+memo.addEventListener('blur',()=>{if(pend)flush();$('#memobox').classList.remove('editing');drawMemo()});
+memo.addEventListener('keydown',e=>{if(e.key==='Escape')memo.blur()});
+$('#memoview').addEventListener('click',editMemo);
+$('#memoview').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();editMemo()}});
+window.addEventListener('pagehide',()=>{if(pend)flush()});
+
+/* ---------- start ---------- */
+state=normalize(lsGet(key));
+renderHead();render();renderMemo(true);
+if(conn)loadWeek();else{setStatus('local');openConn()}
+}
+</script>
+</body>
+</html>
